@@ -1,367 +1,603 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dell Technologies – Market Ticker</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap');
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:         #0a0f1c;
-    --panel:      #0d1423;
-    --border:     #1a2540;
-    --dell-blue:  #007DB8;
-    --dell-blue2: #005F8E;
-    --green:      #00C389;
-    --red:        #F5222D;
-    --amber:      #FAA619;
-    --white:      #E8EDF5;
-    --muted:      #3D5470;
-    --glow-green: 0 0 6px rgba(0,195,137,0.45);
-    --glow-red:   0 0 6px rgba(245,34,45,0.45);
-  }
-
-  body {
-    background: var(--bg);
+  .ds-root {
+    background: #0a0f1c;
     font-family: 'Roboto Condensed', sans-serif;
-    overflow: hidden;
-    height: 56px;
-    display: flex;
-    align-items: center;
-  }
-
-  .ticker-wrap {
-    width: 100%;
-    height: 56px;
-    background: var(--panel);
-    border-top: 2px solid var(--dell-blue);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    overflow: hidden;
+    color: #e8edf5;
+    min-height: 520px;
+    padding: 28px 32px 24px;
+    border-radius: 12px;
     position: relative;
-  }
-
-  /* ── Dell logo badge ── */
-  .ticker-label {
-    flex-shrink: 0;
-    background: var(--dell-blue);
-    color: #fff;
-    font-family: 'Roboto Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 11px;
-    letter-spacing: 2.5px;
-    padding: 0 16px 0 14px;
-    height: 100%;
+    overflow: hidden;
     display: flex;
-    align-items: center;
-    text-transform: uppercase;
-    z-index: 10;
-    white-space: nowrap;
-    gap: 10px;
-    position: relative;
+    flex-direction: column;
+    gap: 22px;
   }
 
-  /* Angled right edge */
-  .ticker-label::after {
+  .ds-root::before {
     content: '';
     position: absolute;
-    right: -14px;
-    top: 0;
-    width: 0;
-    height: 0;
-    border-top: 56px solid transparent;
-    border-left: 14px solid var(--dell-blue);
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: #007DB8;
   }
 
-  /* Dell "D" wordmark circle SVG inline */
-  .dell-logo {
-    width: 28px;
-    height: 28px;
+  .ds-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 0.5px solid rgba(255,255,255,0.08);
+  }
+
+  .ds-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .ds-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #007DB8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #007DB8;
+    font-family: 'Roboto Condensed', sans-serif;
     flex-shrink: 0;
   }
 
-  .label-text {
+  .ds-brand-text {
     display: flex;
     flex-direction: column;
     line-height: 1.1;
   }
-  .label-top { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; }
-  .label-sub { font-size: 9px; letter-spacing: 2px; opacity: 0.75; font-weight: 400; }
 
-  /* Live indicator */
-  .live-badge {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 9px;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.9);
-    background: rgba(0,0,0,0.25);
-    padding: 3px 7px;
-    border-radius: 2px;
-    border: 1px solid rgba(255,255,255,0.15);
-    margin-left: 4px;
-  }
-
-  .pulse-dot {
-    width: 6px;
-    height: 6px;
-    background: var(--green);
-    border-radius: 50%;
-    animation: pulse 1.4s ease-in-out infinite;
-    box-shadow: 0 0 5px rgba(0,195,137,0.7);
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.35; transform: scale(0.65); }
-  }
-
-  /* ── Scrolling track ── */
-  .ticker-scroll-outer {
-    flex: 1;
-    overflow: hidden;
-    height: 100%;
-    position: relative;
-    padding-left: 22px;
-  }
-
-  .ticker-scroll-outer::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0;
-    width: 32px; height: 100%;
-    background: linear-gradient(to right, var(--panel), transparent);
-    z-index: 5;
-    pointer-events: none;
-  }
-
-  .ticker-scroll-outer::after {
-    content: '';
-    position: absolute;
-    right: 0; top: 0;
-    width: 60px; height: 100%;
-    background: linear-gradient(to right, transparent, var(--panel));
-    z-index: 5;
-    pointer-events: none;
-  }
-
-  .ticker-track {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    white-space: nowrap;
-    animation: ticker-scroll 50s linear infinite;
-    will-change: transform;
-  }
-
-  .ticker-track:hover { animation-play-state: paused; }
-
-  @keyframes ticker-scroll {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-
-  /* ── Stock item ── */
-  .stock-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    padding: 0 26px 0 0;
-    cursor: default;
-    transition: opacity 0.15s;
-    user-select: none;
-  }
-
-  .stock-item:hover { opacity: 0.7; }
-
-  .stock-symbol {
-    font-family: 'Roboto Condensed', sans-serif;
+  .ds-brand-text .name {
+    font-size: 20px;
     font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 0.8px;
-    color: var(--white);
+    letter-spacing: 2px;
+    color: #e8edf5;
+    text-transform: uppercase;
   }
 
-  /* Highlight DELL in blue */
-  .stock-symbol.highlight {
-    color: var(--dell-blue);
-    text-shadow: 0 0 12px rgba(0,125,184,0.5);
-  }
-
-  .stock-price {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 13px;
-    color: #8aa4c0;
-    letter-spacing: 0.3px;
-  }
-
-  .stock-change {
-    font-family: 'Roboto Mono', monospace;
+  .ds-brand-text .sub {
     font-size: 11px;
-    font-weight: 500;
-    padding: 2px 7px;
-    border-radius: 2px;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    letter-spacing: 0.2px;
+    letter-spacing: 2.5px;
+    color: #4e6a8a;
+    text-transform: uppercase;
+    font-weight: 400;
   }
 
-  .stock-change.up {
-    color: var(--green);
-    background: rgba(0,195,137,0.09);
-    text-shadow: var(--glow-green);
-    border: 1px solid rgba(0,195,137,0.18);
-  }
-
-  .stock-change.down {
-    color: var(--red);
-    background: rgba(245,34,45,0.08);
-    text-shadow: var(--glow-red);
-    border: 1px solid rgba(245,34,45,0.18);
-  }
-
-  .stock-change.flat {
-    color: var(--amber);
-    background: rgba(250,166,25,0.08);
-    border: 1px solid rgba(250,166,25,0.18);
-  }
-
-  /* Divider */
-  .stock-divider {
-    display: inline-block;
-    width: 1px;
-    height: 22px;
-    background: var(--border);
-    margin-right: 26px;
-    vertical-align: middle;
-    opacity: 0.8;
-  }
-
-  /* ── Timestamp ── */
-  .ticker-time {
-    flex-shrink: 0;
-    font-family: 'Roboto Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    padding: 0 14px;
-    white-space: nowrap;
-    letter-spacing: 0.5px;
-    border-left: 1px solid var(--border);
-    height: 100%;
+  .ds-meta {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    justify-content: center;
-    gap: 2px;
-    line-height: 1.3;
+    gap: 4px;
   }
 
-  .time-label { color: #4e6a8a; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; }
+  .ds-fy-badge {
+    background: rgba(0,125,184,0.15);
+    border: 1px solid rgba(0,125,184,0.3);
+    color: #007DB8;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .ds-timestamp {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    color: #3d5470;
+    letter-spacing: 0.5px;
+  }
+
+  /* KPI grid */
+  .ds-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .ds-kpi {
+    background: rgba(255,255,255,0.035);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 16px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ds-kpi::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 2px;
+    width: 100%;
+    background: var(--accent, rgba(0,125,184,0.4));
+  }
+
+  .ds-kpi-label {
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: #4e6a8a;
+    font-weight: 400;
+  }
+
+  .ds-kpi-value {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 26px;
+    font-weight: 500;
+    color: #e8edf5;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .ds-kpi-sub {
+    font-size: 11px;
+    color: #3d5470;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .ds-delta {
+    font-size: 11px;
+    font-family: 'Roboto Mono', monospace;
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+  .ds-delta.up   { color: #00C389; background: rgba(0,195,137,0.1); }
+  .ds-delta.down { color: #F5222D; background: rgba(245,34,45,0.1); }
+
+  /* Divider row */
+  .ds-section-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #2a3f5a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ds-section-label::before, .ds-section-label::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: rgba(255,255,255,0.06);
+  }
+
+  /* Business segment bars */
+  .ds-segments {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ds-seg-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ds-seg-name {
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: #8aa4c0;
+    width: 120px;
+    flex-shrink: 0;
+  }
+
+  .ds-seg-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .ds-seg-bar {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--bar-color, #007DB8);
+    transition: width 1s cubic-bezier(.4,0,.2,1);
+    width: 0;
+  }
+
+  .ds-seg-val {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    color: #e8edf5;
+    width: 52px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .ds-seg-pct {
+    font-size: 10px;
+    color: #3d5470;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Global presence map — simplified ASCII dot grid */
+  .ds-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .ds-panel {
+    background: rgba(255,255,255,0.025);
+    border: 0.5px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ds-panel-title {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #2a3f5a;
+  }
+
+  /* Highlight facts */
+  .ds-facts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ds-fact-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 0.5px solid rgba(255,255,255,0.04);
+  }
+  .ds-fact-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .ds-fact-label {
+    font-size: 12px;
+    color: #4e6a8a;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .ds-fact-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--dot, #007DB8);
+    flex-shrink: 0;
+  }
+
+  .ds-fact-value {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+    color: #e8edf5;
+    font-weight: 500;
+  }
+
+  /* Stock mini strip */
+  .ds-stock-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .ds-stock-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #007DB8;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .ds-stock-price {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 22px;
+    color: #e8edf5;
+  }
+
+  .ds-stock-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+  }
+
+  .ds-stock-change {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: #00C389;
+    background: rgba(0,195,137,0.1);
+    border: 0.5px solid rgba(0,195,137,0.2);
+  }
+
+  .ds-stock-label {
+    font-size: 9px;
+    color: #2a3f5a;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* Sparkline canvas */
+  .ds-spark { border-radius: 4px; }
+
+  /* Footer */
+  .ds-footer {
+    border-top: 0.5px solid rgba(255,255,255,0.05);
+    padding-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ds-footer-text {
+    font-size: 10px;
+    color: #2a3f5a;
+    letter-spacing: 0.5px;
+  }
+
+  .ds-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00C389;
+    display: inline-block;
+    margin-right: 5px;
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
 </style>
-</head>
-<body>
 
-<div class="ticker-wrap">
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Dell Technologies company stats dashboard showing FY2024 financials, business segments, key facts, and stock price.</h2>
 
-  <!-- Dell badge -->
-  <div class="ticker-label">
-    <!-- Dell logo SVG -->
-    <svg class="dell-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="Dell">
-      <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="5"/>
-      <text x="50" y="68" text-anchor="middle"
-            font-family="'Roboto Condensed', sans-serif"
-            font-weight="700" font-size="52" fill="#fff">D</text>
-    </svg>
-    <div class="label-text">
-      <span class="label-top">DELL</span>
-      <span class="label-sub">Technologies</span>
+<div class="ds-root" id="dsRoot">
+
+  <!-- Header -->
+  <div class="ds-header">
+    <div class="ds-brand">
+      <div class="ds-logo">D</div>
+      <div class="ds-brand-text">
+        <span class="name">Dell</span>
+        <span class="sub">Technologies</span>
+      </div>
     </div>
-    <div class="live-badge">
-      <div class="pulse-dot"></div>
-      LIVE
+    <div class="ds-meta">
+      <div class="ds-fy-badge">FY 2024</div>
+      <div class="ds-timestamp" id="dsTime">—</div>
     </div>
   </div>
 
-  <!-- Scrolling track -->
-  <div class="ticker-scroll-outer">
-    <div class="ticker-track" id="tickerTrack"></div>
+  <!-- KPI row -->
+  <div class="ds-kpi-grid">
+    <div class="ds-kpi" style="--accent: rgba(0,125,184,0.5)">
+      <div class="ds-kpi-label">Revenue</div>
+      <div class="ds-kpi-value">$88.4B</div>
+      <div class="ds-kpi-sub"><span class="ds-delta down">▼ 13.6%</span> vs FY23</div>
+    </div>
+    <div class="ds-kpi" style="--accent: rgba(0,195,137,0.4)">
+      <div class="ds-kpi-label">Net Income</div>
+      <div class="ds-kpi-value">$3.2B</div>
+      <div class="ds-kpi-sub"><span class="ds-delta up">▲ 91%</span> vs FY23</div>
+    </div>
+    <div class="ds-kpi" style="--accent: rgba(0,125,184,0.3)">
+      <div class="ds-kpi-label">Employees</div>
+      <div class="ds-kpi-value">120K+</div>
+      <div class="ds-kpi-sub" style="color:#3d5470">Worldwide</div>
+    </div>
+    <div class="ds-kpi" style="--accent: rgba(250,166,25,0.3)">
+      <div class="ds-kpi-label">Countries</div>
+      <div class="ds-kpi-value">180+</div>
+      <div class="ds-kpi-sub" style="color:#3d5470">Global reach</div>
+    </div>
   </div>
 
-  <!-- Clock -->
-  <div class="ticker-time" id="tickerTime">
-    <span class="time-label">NASDAQ</span>
-    <span id="timeDisplay">—</span>
+  <!-- Business segments -->
+  <div class="ds-section-label">Business segments — FY2024 revenue</div>
+
+  <div class="ds-segments" id="dsSegs">
+    <!-- JS renders -->
   </div>
+
+  <!-- Bottom panels -->
+  <div class="ds-bottom">
+
+    <!-- Key facts -->
+    <div class="ds-panel">
+      <div class="ds-panel-title">Company highlights</div>
+      <div class="ds-facts">
+        <div class="ds-fact-row">
+          <div class="ds-fact-label"><div class="ds-fact-dot" style="--dot:#007DB8"></div>Founded</div>
+          <div class="ds-fact-value">1984</div>
+        </div>
+        <div class="ds-fact-row">
+          <div class="ds-fact-label"><div class="ds-fact-dot" style="--dot:#00C389"></div>Headquarters</div>
+          <div class="ds-fact-value">Round Rock, TX</div>
+        </div>
+        <div class="ds-fact-row">
+          <div class="ds-fact-label"><div class="ds-fact-dot" style="--dot:#FAA619"></div>Fortune rank</div>
+          <div class="ds-fact-value">#29</div>
+        </div>
+        <div class="ds-fact-row">
+          <div class="ds-fact-label"><div class="ds-fact-dot" style="--dot:#007DB8"></div>R&amp;D patents</div>
+          <div class="ds-fact-value">22,000+</div>
+        </div>
+        <div class="ds-fact-row">
+          <div class="ds-fact-label"><div class="ds-fact-dot" style="--dot:#00C389"></div>CEO</div>
+          <div class="ds-fact-value">Michael Dell</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock + sparkline -->
+    <div class="ds-panel">
+      <div class="ds-panel-title">NYSE: DELL</div>
+      <div class="ds-stock-strip">
+        <div>
+          <div class="ds-stock-name">DELL</div>
+          <div class="ds-stock-price" id="dsPrice">$124.57</div>
+        </div>
+        <div class="ds-stock-info">
+          <div class="ds-stock-change" id="dsChg">▲ +2.34 &nbsp;+1.91%</div>
+          <div class="ds-stock-label">Today's change</div>
+        </div>
+      </div>
+      <canvas id="sparkCanvas" class="ds-spark" height="54" style="width:100%; display:block;"></canvas>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#2a3f5a;letter-spacing:0.5px;margin-top:2px;">
+        <span>52w low: $72.41</span><span>52w high: $179.70</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="ds-footer">
+    <div class="ds-footer-text"><span class="ds-live-dot"></span>Live display · Internal use only</div>
+    <div class="ds-footer-text">Data sources: Dell Technologies Investor Relations · NYSE · FY2024 Annual Report</div>
+  </div>
+
 </div>
 
 <script>
-  const stocks = [
-    { symbol: "DELL",  price: 124.57,  change: +2.34,  pct: +1.91, highlight: true  },
-    { symbol: "IBM",   price: 232.47,  change: +1.83,  pct: +0.79  },
-    { symbol: "AAPL",  price: 189.52,  change: +2.14,  pct: +1.14  },
-    { symbol: "MSFT",  price: 415.38,  change: -3.21,  pct: -0.77  },
-    { symbol: "GOOGL", price: 173.91,  change: +0.57,  pct: +0.33  },
-    { symbol: "AMZN",  price: 198.64,  change: -1.45,  pct: -0.72  },
-    { symbol: "NVDA",  price: 875.12,  change: +18.43, pct: +2.15  },
-    { symbol: "META",  price: 521.77,  change: +4.92,  pct: +0.95  },
-    { symbol: "TSLA",  price: 172.34,  change: -6.88,  pct: -3.84  },
-    { symbol: "HPQ",   price: 33.41,   change: -0.22,  pct: -0.65  },
-    { symbol: "CRM",   price: 302.88,  change: +3.11,  pct: +1.04  },
-    { symbol: "INTC",  price: 41.22,   change: -0.58,  pct: -1.39  },
-    { symbol: "AMD",   price: 163.05,  change: +5.70,  pct: +3.62  },
-    { symbol: "JPM",   price: 207.15,  change: +1.02,  pct: +0.49  },
-    { symbol: "V",     price: 285.40,  change: +0.00,  pct:  0.00  },
+  // Segments data
+  const segs = [
+    { name: 'ISG — Infrastructure', rev: 33.9, color: '#007DB8', pct: 38 },
+    { name: 'CSG — Client Solutions', rev: 48.7, color: '#0099CC', pct: 55 },
+    { name: 'Other / VMware', rev: 5.8,  color: '#3d5470',  pct: 7  },
   ];
+  const maxRev = Math.max(...segs.map(s => s.rev));
 
-  function renderItem(s) {
-    const dir    = s.change > 0 ? 'up' : s.change < 0 ? 'down' : 'flat';
-    const arrow  = s.change > 0 ? '▲' : s.change < 0 ? '▼' : '■';
-    const sign   = s.change > 0 ? '+' : '';
-    const pctStr = `${sign}${s.pct.toFixed(2)}%`;
-    const chgStr = `${sign}${Math.abs(s.change).toFixed(2)}`;
-    const symClass = s.highlight ? 'stock-symbol highlight' : 'stock-symbol';
+  const segContainer = document.getElementById('dsSegs');
+  segs.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'ds-seg-row';
+    row.innerHTML = `
+      <div class="ds-seg-name">${s.name}</div>
+      <div class="ds-seg-bar-bg">
+        <div class="ds-seg-bar" data-w="${(s.rev/maxRev*100).toFixed(1)}" style="--bar-color:${s.color}; width:0%"></div>
+      </div>
+      <div class="ds-seg-val">$${s.rev}B</div>
+      <div class="ds-seg-pct">${s.pct}%</div>`;
+    segContainer.appendChild(row);
+  });
 
-    return `
-      <span class="stock-item" data-symbol="${s.symbol}">
-        <span class="${symClass}">${s.symbol}</span>
-        <span class="stock-price">$${s.price.toFixed(2)}</span>
-        <span class="stock-change ${dir}">${arrow} ${chgStr}&nbsp;&nbsp;${pctStr}</span>
-      </span>
-      <span class="stock-divider"></span>`;
-  }
-
-  function buildTrack() {
-    const html  = stocks.map(renderItem).join('');
-    document.getElementById('tickerTrack').innerHTML = html + html;
-  }
-
-  function driftPrices() {
-    stocks.forEach(s => {
-      const delta = (Math.random() - 0.50) * (s.highlight ? 0.18 : 0.25);
-      s.price     = Math.max(1, s.price + delta);
-      s.change   += delta;
-      s.pct       = (s.change / (s.price - s.change)) * 100;
+  // Animate bars in
+  setTimeout(() => {
+    document.querySelectorAll('.ds-seg-bar').forEach(b => {
+      b.style.width = b.dataset.w + '%';
     });
-    buildTrack();
-  }
+  }, 300);
 
+  // Clock
   function updateTime() {
-    const now  = new Date();
-    const time = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const date = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    document.getElementById('timeDisplay').textContent = `${date}  ${time}`;
+    const now = new Date();
+    const t = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const d = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('dsTime').textContent = d + '  ' + t;
   }
-
-  buildTrack();
   updateTime();
   setInterval(updateTime, 1000);
-  setInterval(driftPrices, 5000);
+
+  // Sparkline
+  (function drawSpark() {
+    const canvas = document.getElementById('sparkCanvas');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.parentElement.clientWidth - 32;
+    const H = 54;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    // Synthetic 90-day spark data anchored to current price
+    const base = 124.57;
+    const pts = [];
+    let v = 100;
+    for (let i = 0; i < 90; i++) {
+      v += (Math.random() - 0.47) * 2.2;
+      pts.push(v);
+    }
+    // Scale to ±20% around base
+    const mn = Math.min(...pts), mx = Math.max(...pts);
+    const scaled = pts.map(p => base * (0.82 + 0.36 * (p - mn) / (mx - mn)));
+
+    const sMin = Math.min(...scaled), sMax = Math.max(...scaled);
+    const xStep = W / (scaled.length - 1);
+    const yMap  = v => H - 6 - (v - sMin) / (sMax - sMin) * (H - 12);
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, 'rgba(0,125,184,0.25)');
+    grad.addColorStop(1, 'rgba(0,125,184,0)');
+
+    ctx.beginPath();
+    scaled.forEach((p, i) => {
+      i === 0 ? ctx.moveTo(i * xStep, yMap(p)) : ctx.lineTo(i * xStep, yMap(p));
+    });
+    ctx.strokeStyle = '#007DB8';
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Fill below
+    ctx.lineTo((scaled.length - 1) * xStep, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Endpoint dot
+    const lastX = (scaled.length - 1) * xStep;
+    const lastY = yMap(scaled[scaled.length - 1]);
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#00C389';
+    ctx.fill();
+  })();
+
+  // Gentle stock drift
+  let price = 124.57, change = 2.34, pct = 1.91;
+  setInterval(() => {
+    const d = (Math.random() - 0.49) * 0.12;
+    price  = Math.max(1, price + d);
+    change = parseFloat((change + d).toFixed(2));
+    pct    = parseFloat(((change / (price - change)) * 100).toFixed(2));
+    const up = change >= 0;
+    document.getElementById('dsPrice').textContent = '$' + price.toFixed(2);
+    const chgEl = document.getElementById('dsChg');
+    const sign = up ? '+' : '';
+    chgEl.textContent = (up ? '▲' : '▼') + ' ' + sign + change.toFixed(2) + '  ' + sign + Math.abs(pct).toFixed(2) + '%';
+    chgEl.style.color = up ? '#00C389' : '#F5222D';
+    chgEl.style.background = up ? 'rgba(0,195,137,0.1)' : 'rgba(245,34,45,0.1)';
+    chgEl.style.border = up ? '0.5px solid rgba(0,195,137,0.2)' : '0.5px solid rgba(245,34,45,0.2)';
+  }, 4000);
 </script>
-</body>
-</html>
